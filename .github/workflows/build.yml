@@ -37,9 +37,17 @@ jobs:
       - name: Сборка APK
         run: yes | buildozer android debug > build.log 2>&1
 
-      - name: Конец лога при ошибке
+      - name: Причина ошибки
         if: failure()
-        run: tail -n 60 build.log
+        run: |
+          N=$(grep -n "# ENVIRONMENT" build.log | head -1 | cut -d: -f1)
+          if [ -n "$N" ]; then
+            START=$((N-80))
+            if [ "$START" -lt 1 ]; then START=1; fi
+            sed -n "${START},${N}p" build.log | cut -c1-300
+          else
+            tail -n 80 build.log | cut -c1-300
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
